@@ -16,7 +16,8 @@ import {
   Box,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  DollarSign
 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Sold", href: "/sold", icon: CheckCircle },
   { name: "Stores", href: "/stores", icon: Store },
   { name: "Products", href: "/products", icon: Box },
+  { name: "Expenses", href: "/expenses", icon: DollarSign },
 ]
 
 export function Sidebar() {
@@ -55,18 +57,18 @@ export function Sidebar() {
 
   return (
     <div className={cn(
-      "flex h-screen flex-col border-r bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 shadow-sm",
+      "flex h-screen flex-col border-r bg-card dark:bg-card border-gray-200 dark:border-border transition-all duration-300 shadow-sm",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 bg-white dark:bg-gray-800">
+      <div className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-border px-4 bg-card dark:bg-card">
         {!collapsed && (
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">SoleSync Sells</h2>
+          <h2 className="text-lg font-semibold text-foreground dark:text-foreground">SoleSync Sells</h2>
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="h-8 w-8 hover:bg-accent dark:hover:bg-accent"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? (
@@ -93,8 +95,8 @@ export function Sidebar() {
                         "w-full transition-all duration-200",
                         collapsed ? "justify-center px-2" : "justify-start",
                         isActive 
-                          ? "bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 shadow-sm font-medium" 
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          ? "bg-primary dark:bg-foreground text-primary-foreground dark:text-background hover:bg-primary/90 dark:hover:bg-accent shadow-sm font-medium" 
+                          : "text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent"
                       )}
                     >
                       <Icon className={cn("h-4 w-4 flex-shrink-0", !collapsed && "mr-2")} />
@@ -114,27 +116,27 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 dark:border-gray-700 space-y-2 p-3 bg-white dark:bg-gray-800">
+      <div className="border-t border-gray-200 dark:border-border space-y-2 p-3 bg-card dark:bg-card">
         {session?.user && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className={cn(
-                  "flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
+                  "flex items-center gap-3 px-2 py-2 rounded-md hover:bg-accent dark:hover:bg-accent transition-colors",
                   collapsed ? "justify-center" : "justify-start"
                 )}>
                   <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarImage src="" alt={session?.user?.name || "User"} />
-                    <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">
+                    <AvatarFallback className="bg-secondary dark:bg-secondary text-foreground dark:text-foreground text-xs">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
                   {!collapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-50">
+                      <p className="text-sm font-medium truncate text-foreground dark:text-foreground">
                         {session.user.name || "User"}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate">
                         {session.user.email}
                       </p>
                     </div>
@@ -159,7 +161,7 @@ export function Sidebar() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 transition-all duration-200",
+                  "w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-accent transition-all duration-200",
                   collapsed ? "justify-center px-2" : "justify-start"
                 )}
                 onClick={handleLogout}

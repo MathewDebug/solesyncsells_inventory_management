@@ -29,7 +29,7 @@ export function ThemeToggle({ collapsed = false }: ThemeToggleProps) {
     <Button
       variant="ghost"
       className={cn(
-        "w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all",
+        "w-full text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent transition-all",
         collapsed ? "justify-center px-2" : "justify-start"
       )}
       onClick={() => setTheme(isDark ? "light" : "dark")}

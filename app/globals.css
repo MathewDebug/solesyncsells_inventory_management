@@ -12,25 +12,36 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    /* 6-Level Color System - Light Mode */
+    /* Color 1: Page background - very light gray */
+    --background: 0 0% 96%;
+    /* Color 2: First level components (navbar, main cards) - white */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 0 0% 15%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 20%;
-    --muted: 0 0% 96%;
+    /* Color 3: Nested level 1 - very light gray */
+    --secondary: 0 0% 98%;
+    /* Color 4: Nested level 2 - light gray */
+    --muted: 0 0% 95%;
+    /* Color 5: Nested level 3 - slightly darker gray */
+    --color5: 0 0% 92%;
+    /* Color 6: Nested level 4 - medium gray */
+    --color6: 0 0% 90%;
+    
+    /* Text and UI colors */
+    --foreground: 0 0% 0%; /* black */
+    --card-foreground: 0 0% 0%; /* black */
+    --popover: 0 0% 100%; /* white (uses color2) */
+    --popover-foreground: 0 0% 0%; /* black */
+    --primary: 0 0% 0%; /* black */
+    --primary-foreground: 0 0% 100%; /* white */
+    --secondary-foreground: 0 0% 0%; /* black */
     --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 20%;
+    --accent: 217 91% 60%; /* blue for hover */
+    --accent-foreground: 0 0% 100%; /* white */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
-    --ring: 0 0% 20%;
+    --border: 0 0% 90%; /* uses color6 */
+    --input: 0 0% 100%; /* white (uses color2) */
+    --ring: 0 0% 0%; /* black */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -39,25 +50,36 @@ body {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 17 24% 15%; /* gray-900 */
-    --foreground: 210 20% 98%; /* gray-50 */
-    --card: 215 28% 17%; /* gray-800 */
-    --card-foreground: 210 20% 98%; /* gray-50 */
-    --popover: 215 28% 17%; /* gray-800 */
-    --popover-foreground: 210 20% 98%; /* gray-50 */
-    --primary: 210 20% 98%; /* gray-50 */
-    --primary-foreground: 17 24% 15%; /* gray-900 */
-    --secondary: 215 16% 22%; /* gray-700 */
-    --secondary-foreground: 210 20% 98%; /* gray-50 */
-    --muted: 215 16% 22%; /* gray-700 */
-    --muted-foreground: 215 13% 65%; /* gray-400 */
-    --accent: 215 16% 22%; /* gray-700 */
-    --accent-foreground: 210 20% 98%; /* gray-50 */
+    /* 6-Level Color System - Dark Mode */
+    /* Color 1: Page background - very dark gray */
+    --background: 0 0% 10%;
+    /* Color 2: First level components (navbar, main cards) - dark gray */
+    --card: 0 0% 15%;
+    /* Color 3: Nested level 1 - slightly lighter */
+    --secondary: 0 0% 20%;
+    /* Color 4: Nested level 2 - lighter gray */
+    --muted: 0 0% 25%;
+    /* Color 5: Nested level 3 - even lighter */
+    --color5: 0 0% 30%;
+    /* Color 6: Nested level 4 - lightest dark gray */
+    --color6: 0 0% 35%;
+    
+    /* Text and UI colors */
+    --foreground: 0 0% 100%; /* white */
+    --card-foreground: 0 0% 100%; /* white */
+    --popover: 0 0% 15%; /* uses color2 */
+    --popover-foreground: 0 0% 100%; /* white */
+    --primary: 0 0% 100%; /* white */
+    --primary-foreground: 0 0% 10%; /* very dark gray */
+    --secondary-foreground: 0 0% 100%; /* white */
+    --muted-foreground: 0 0% 65%;
+    --accent: 270 70% 60%; /* purple for hover */
+    --accent-foreground: 0 0% 100%; /* white */
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 215 16% 22%; /* gray-700 */
-    --input: 215 16% 22%; /* gray-700 */
-    --ring: 210 20% 98%; /* gray-50 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%; /* uses color3 */
+    --input: 0 0% 15%; /* uses color2 */
+    --ring: 0 0% 100%; /* white */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

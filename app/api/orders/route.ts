@@ -17,22 +17,28 @@ export async function GET() {
     
     const orders = await db.collection("orders")
       .find({})
-      .sort({ createdAt: -1 })
+      .sort({ orderNumber: -1 })
       .limit(1000)
       .toArray()
 
     return NextResponse.json(
       orders.map(order => ({
         id: order._id.toString(),
-        orderNumber: order.orderNumber || null,
+        orderNumber: order.orderNumber ?? null,
         products: order.products,
         date: order.date,
         paymentMethod: order.paymentMethod,
-        totalItemCount: order.totalItemCount || 0,
-        supplier: order.supplier || null,
-        notes: order.notes || null,
-        totalOrderAmount: order.totalOrderAmount || null,
-        feesAndShipping: order.feesAndShipping || null,
+        totalItemCount: order.totalItemCount ?? 0,
+        supplier: order.supplier ?? null,
+        notes: order.notes ?? null,
+        totalOrderAmount: order.totalOrderAmount ?? null,
+        feesAndShipping: order.feesAndShipping ?? null,
+        productCost: order.productCost ?? null,
+        carrier: order.carrier ?? null,
+        shipStartDate: order.shipStartDate ?? null,
+        trackingLinks: order.trackingLinks ?? [],
+        shipArrivalDate: order.shipArrivalDate ?? null,
+        status: order.status === "ARRIVED" ? "COMPLETED" : (order.status ?? "SHIPPING"),
         createdAt: order.createdAt,
       })),
       { status: 200 }
@@ -50,7 +56,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { products, date, paymentMethod, totalItemCount, supplier, notes, totalOrderAmount, feesAndShipping } = body
+    const { products, date, paymentMethod, totalItemCount, supplier, notes, totalOrderAmount, feesAndShipping, productCost, carrier, shipStartDate, trackingLinks, shipArrivalDate, status } = body
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -100,6 +106,12 @@ export async function POST(request: Request) {
       notes: notes || null,
       totalOrderAmount: totalOrderAmount || null,
       feesAndShipping: feesAndShipping || null,
+      productCost: productCost || null,
+      carrier: carrier || null,
+      shipStartDate: shipStartDate ? new Date(shipStartDate) : null,
+      trackingLinks: trackingLinks || [],
+      shipArrivalDate: shipArrivalDate ? new Date(shipArrivalDate) : null,
+      status: status === "ARRIVED" ? "COMPLETED" : (status || "SHIPPING"),
       createdAt: new Date(),
     })
 
@@ -115,6 +127,11 @@ export async function POST(request: Request) {
         notes: notes || null,
         totalOrderAmount: totalOrderAmount || null,
         feesAndShipping: feesAndShipping || null,
+        productCost: productCost || null,
+        carrier: carrier || null,
+        shipStartDate: shipStartDate ? new Date(shipStartDate) : null,
+        trackingLinks: trackingLinks || [],
+        shipArrivalDate: shipArrivalDate ? new Date(shipArrivalDate) : null,
         createdAt: new Date(),
       },
       { status: 201 }

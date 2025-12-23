@@ -35,6 +35,7 @@ export default function ProductsPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
+  const [customSizes, setCustomSizes] = useState<string[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -156,7 +157,12 @@ export default function ProductsPage() {
     setItemName(product.name)
     setImagePreview(product.image)
     setSelectedImage(null)
-    setSelectedSizes(product.sizes || [])
+    const allSizes = product.sizes || []
+    // Separate standard sizes from custom sizes
+    const standardSizes = allSizes.filter(size => AVAILABLE_SIZES.includes(size))
+    const custom = allSizes.filter(size => !AVAILABLE_SIZES.includes(size))
+    setSelectedSizes(standardSizes)
+    setCustomSizes(custom)
     setIsOpen(true)
   }
 
@@ -167,6 +173,7 @@ export default function ProductsPage() {
     setSelectedImage(null)
     setImagePreview(null)
     setSelectedSizes([])
+    setCustomSizes([])
     setError(null)
   }
 
@@ -174,6 +181,20 @@ export default function ProductsPage() {
     setSelectedSizes((prev) =>
       prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
     )
+  }
+
+  const addCustomSize = () => {
+    setCustomSizes([...customSizes, ""])
+  }
+
+  const updateCustomSize = (index: number, value: string) => {
+    const updated = [...customSizes]
+    updated[index] = value
+    setCustomSizes(updated)
+  }
+
+  const removeCustomSize = (index: number) => {
+    setCustomSizes(customSizes.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async () => {
@@ -207,6 +228,12 @@ export default function ProductsPage() {
       
       const method = editingProduct ? "PUT" : "POST"
 
+      // Combine standard and custom sizes, filtering out empty custom sizes
+      const allSizes = [
+        ...selectedSizes,
+        ...customSizes.filter(size => size.trim() !== "")
+      ]
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -215,7 +242,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           name: itemName,
           image: base64Image,
-          sizes: selectedSizes,
+          sizes: allSizes,
         }),
       })
 
@@ -278,6 +305,7 @@ export default function ProductsPage() {
             setSelectedImage(null)
             setImagePreview(null)
             setSelectedSizes([])
+            setCustomSizes([])
             setError(null)
             setIsOpen(true)
           }}>
@@ -327,7 +355,7 @@ export default function ProductsPage() {
               {filteredProducts.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
                   <div 
-                    className="relative w-full aspect-square bg-gray-100 dark:bg-gray-800 cursor-pointer"
+                    className="relative w-full aspect-square bg-card dark:bg-card cursor-pointer"
                     onClick={() => {
                       setSelectedProductForStats(product)
                       setIsStatsOpen(true)
@@ -359,7 +387,7 @@ export default function ProductsPage() {
                         {product.sizes.map((size) => (
                           <span
                             key={size}
-                            className="px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded"
+                            className="px-2 py-0.5 text-xs font-medium bg-card dark:bg-card text-foreground dark:text-foreground rounded"
                           >
                             {size}
                           </span>
@@ -375,8 +403,8 @@ export default function ProductsPage() {
       </div>
 
       <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
             <DialogDescription>
               {editingProduct 
@@ -385,11 +413,11 @@ export default function ProductsPage() {
             </DialogDescription>
           </DialogHeader>
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-md">
+            <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-md flex-shrink-0">
               {error}
             </div>
           )}
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
             <div className="space-y-2">
               <Label htmlFor="item">Item</Label>
               <Input
@@ -401,28 +429,77 @@ export default function ProductsPage() {
             </div>
             <div className="space-y-2">
               <Label>Sizes</Label>
-              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[3rem]">
-                {AVAILABLE_SIZES.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    className={`
-                      px-3 py-1 rounded-md text-sm font-medium transition-colors
-                      ${
-                        selectedSizes.includes(size)
-                          ? "bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                      }
-                    `}
-                  >
-                    {size}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                {/* Standard Sizes */}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Standard Sizes</Label>
+                  <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[3rem]">
+                    {AVAILABLE_SIZES.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => toggleSize(size)}
+                        className={`
+                          px-3 py-1 rounded-md text-sm font-medium transition-colors
+                          ${
+                            selectedSizes.includes(size)
+                              ? "bg-primary dark:bg-foreground text-primary-foreground dark:text-background"
+                              : "bg-card dark:bg-card text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent"
+                          }
+                        `}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Custom Sizes */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-xs text-muted-foreground">Custom Sizes</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCustomSize}
+                      className="h-7 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Custom Size
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {customSizes.map((customSize, index) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="Enter custom size (e.g., 28, 30, One Size)"
+                          value={customSize}
+                          onChange={(e) => updateCustomSize(index, e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCustomSize(index)}
+                          className="h-8 w-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {customSizes.length === 0 && (
+                      <p className="text-xs text-muted-foreground italic">
+                        No custom sizes added. Click "Add Custom Size" to add one.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              {selectedSizes.length > 0 && (
+              {(selectedSizes.length > 0 || customSizes.some(s => s.trim() !== "")) && (
                 <p className="text-xs text-muted-foreground">
-                  Selected: {selectedSizes.join(", ")}
+                  Selected: {[...selectedSizes, ...customSizes.filter(s => s.trim() !== "")].join(", ")}
                 </p>
               )}
             </div>
@@ -449,11 +526,11 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-center w-full">
                   <label
                     htmlFor="image-upload"
-                    className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-accent dark:hover:bg-accent"
                   >
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-10 h-10 mb-3 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="mb-2 text-sm text-gray-500 dark:text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -472,7 +549,7 @@ export default function ProductsPage() {
               )}
             </div>
           </div>
-          <DialogFooter className="flex items-center justify-between">
+          <DialogFooter className="flex items-center justify-between flex-shrink-0 border-t pt-4 mt-4">
             <div>
               {editingProduct && (
                 <Button
@@ -525,7 +602,7 @@ export default function ProductsPage() {
                     {selectedProductForStats.sizes.map((size) => (
                       <span
                         key={size}
-                        className="px-3 py-1 text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded"
+                        className="px-3 py-1 text-sm font-medium bg-card dark:bg-card text-foreground dark:text-foreground rounded"
                       >
                         {size}
                       </span>
@@ -535,7 +612,7 @@ export default function ProductsPage() {
               )}
               <div className="space-y-2">
                 <Label>Product Image</Label>
-                <div className="relative w-full aspect-square bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+                <div className="relative w-full aspect-square bg-card dark:bg-card rounded-md overflow-hidden">
                   <img
                     src={selectedProductForStats.image}
                     alt={selectedProductForStats.name}

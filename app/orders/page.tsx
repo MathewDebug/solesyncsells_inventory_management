@@ -6,7 +6,23 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Plus, Search, Edit, Trash2 } from "lucide-react"
+
+interface TrackingLink {
+  url: string
+  notes: string
+}
+
+type OrderStatus = "SHIPPING" | "PARTIALLY ARRIVED" | "COMPLETED"
 
 interface Order {
   id: string
@@ -17,6 +33,8 @@ interface Order {
     size: string
     quantity: number
     price?: number
+    arrivedQuantity?: number
+    status?: OrderStatus
   }>
   date: string
   paymentMethod: string
@@ -25,6 +43,12 @@ interface Order {
   notes?: string | null
   totalOrderAmount?: number | null
   feesAndShipping?: number | null
+  productCost?: number | null
+  carrier?: string | null
+  shipStartDate?: string | null
+  trackingLinks?: TrackingLink[]
+  shipArrivalDate?: string | null
+  status?: OrderStatus
   createdAt: string
 }
 
@@ -34,6 +58,9 @@ export default function OrdersPage() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchOrders()
@@ -65,6 +92,38 @@ export default function OrdersPage() {
       console.error("Error fetching orders:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteClick = (order: Order) => {
+    setOrderToDelete(order)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!orderToDelete) return
+
+    try {
+      setDeleting(true)
+      const response = await fetch(`/api/orders/${orderToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Remove the deleted order from the list
+        setOrders(orders.filter((order) => order.id !== orderToDelete.id))
+        setFilteredOrders(filteredOrders.filter((order) => order.id !== orderToDelete.id))
+        setDeleteDialogOpen(false)
+        setOrderToDelete(null)
+      } else {
+        const data = await response.json()
+        alert(data.error || "Failed to delete order")
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error)
+      alert("An error occurred while deleting the order")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -115,60 +174,161 @@ export default function OrdersPage() {
                 <Card key={order.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Order #{order.orderNumber ?? order.id.slice(-6)}</CardTitle>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(order.date).toLocaleDateString()}
+                      <div className="flex items-center gap-3">
+                        <CardTitle>Order #{order.orderNumber ?? order.id.slice(-6)}</CardTitle>
+                        {order.status && (
+                          <Badge variant={
+                            (order.status === "COMPLETED" || (order.status as string) === "ARRIVED") ? "default" :
+                            order.status === "PARTIALLY ARRIVED" ? "secondary" :
+                            "outline"
+                          }>
+                            {(order.status as string) === "ARRIVED" ? "COMPLETED" : order.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => router.push(`/orders/edit/${order.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteClick(order)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {order.supplier && (
-                        <div>
-                          <p className="text-sm font-medium">Supplier:</p>
-                          <p className="text-sm text-muted-foreground">{order.supplier}</p>
-                        </div>
-                      )}
+                    {/* Row 1: Order Date, Supplier, Payment Method */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <p className="text-sm font-medium">Payment Method:</p>
+                        <p className="text-sm font-medium">Order Date</p>
+                        <p className="text-sm text-muted-foreground">{new Date(order.date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Supplier</p>
+                        <p className="text-sm text-muted-foreground">{order.supplier || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Payment Method</p>
                         <p className="text-sm text-muted-foreground">{order.paymentMethod}</p>
                       </div>
+                    </div>
+
+                    {/* Row 2: Total Order Amount, Product Cost, Fees and Shipping */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm font-medium">Total Order Amount</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.totalOrderAmount ? `$${order.totalOrderAmount.toFixed(2)}` : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Product Cost</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.productCost !== null && order.productCost !== undefined ? `$${order.productCost.toFixed(2)}` : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Fees and Shipping</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.feesAndShipping !== null && order.feesAndShipping !== undefined && order.feesAndShipping > 0
+                            ? `$${order.feesAndShipping.toFixed(2)}`
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
                       <div>
                         <p className="text-sm font-medium">Total Items:</p>
                         <p className="text-sm text-muted-foreground">{order.totalItemCount || 0}</p>
                       </div>
-                      {order.totalOrderAmount && (
-                        <div>
-                          <p className="text-sm font-medium">Total Order Amount:</p>
-                          <p className="text-sm text-muted-foreground">${order.totalOrderAmount.toFixed(2)}</p>
-                        </div>
-                      )}
-                      {order.feesAndShipping && order.feesAndShipping > 0 && (
-                        <div>
-                          <p className="text-sm font-medium">Fees and Shipping:</p>
-                          <p className="text-sm text-muted-foreground">${order.feesAndShipping.toFixed(2)}</p>
-                        </div>
-                      )}
                       <div>
                         <p className="text-sm font-medium">Products:</p>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                          {order.products
-                            .sort((a, b) => {
-                              // First sort by product name
-                              if (a.productName !== b.productName) {
-                                return a.productName.localeCompare(b.productName)
-                              }
-                              // Then sort by size (XXS to XXL)
-                              const sizeOrder = ["XXS", "XS", "S", "M", "L", "XL", "XXL"]
-                              return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size)
-                            })
-                            .map((product, idx) => (
-                              <li key={idx}>
-                                {product.productName} - Size: {product.size} - Qty: {product.quantity}
-                                {product.price && ` - $${product.price.toFixed(2)} each ($${(product.price * product.quantity).toFixed(2)} total)`}
-                              </li>
-                            ))}
-                        </ul>
+                        {/* Group products by name and status */}
+                        {(() => {
+                          const productGroups = new Map<string, typeof order.products>()
+                          order.products.forEach(product => {
+                            const key = product.productId
+                            if (!productGroups.has(key)) {
+                              productGroups.set(key, [])
+                            }
+                            productGroups.get(key)!.push(product)
+                          })
+
+                          const sortedGroups = Array.from(productGroups.entries()).sort((a, b) => 
+                            a[1][0].productName.localeCompare(b[1][0].productName)
+                          )
+
+                          return (
+                            <div className="grid grid-cols-2 gap-3">
+                              {sortedGroups.map(([productId, products]) => {
+                                // Convert ARRIVED to COMPLETED for backward compatibility
+                                const rawStatus = products[0].status as string | undefined || "SHIPPING"
+                                const productStatus: OrderStatus = rawStatus === "ARRIVED" ? "COMPLETED" : (rawStatus && ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"].includes(rawStatus) ? rawStatus as OrderStatus : "SHIPPING")
+                                const isCompleted = productStatus === "COMPLETED"
+                                const isPartiallyArrived = productStatus === "PARTIALLY ARRIVED"
+                                
+                                return (
+                                  <div 
+                                    key={productId} 
+                                    className={`p-2 rounded-md border ${
+                                      isCompleted 
+                                        ? "bg-green-950/20 dark:bg-green-950/20 border-green-200 dark:border-green-800" 
+                                        : isPartiallyArrived
+                                        ? "bg-yellow-950/20 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
+                                        : "bg-gray-950/20 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-semibold">{products[0].productName}</p>
+                                      <Badge variant={
+                                        productStatus === "COMPLETED" ? "default" :
+                                        productStatus === "PARTIALLY ARRIVED" ? "secondary" :
+                                        "outline"
+                                      } className="text-xs">
+                                        {productStatus}
+                                      </Badge>
+                                    </div>
+                                    <ul className="list-none text-sm text-muted-foreground space-y-1">
+                                      {products
+                                        .sort((a, b) => {
+                                          const sizeOrder = ["XXS", "XS", "S", "M", "L", "XL", "XXL"]
+                                          return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size)
+                                        })
+                                        .map((product, idx) => (
+                                          <li key={idx} className="flex items-center gap-2">
+                                            <span>
+                                              Size: {product.size} - Ordered: {product.quantity}
+                                              {product.arrivedQuantity !== undefined && product.arrivedQuantity > 0 && (
+                                                <span className={isCompleted ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
+                                                  {" "}/ Arrived: {product.arrivedQuantity}
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className="text-xs">
+                                              {product.price !== undefined && product.price !== null && product.price !== -1
+                                                ? `- $${product.price.toFixed(2)} each ($${(product.price * product.quantity).toFixed(2)} total)`
+                                                : "- ? each"}
+                                            </span>
+                                          </li>
+                                        ))}
+                                    </ul>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )
+                        })()}
                       </div>
                       {order.notes && (
                         <div>
@@ -177,12 +337,92 @@ export default function OrdersPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Shipping Details */}
+                    {(order.carrier || order.shipStartDate || (order.trackingLinks && order.trackingLinks.length > 0) || order.shipArrivalDate) && (
+                      <div className="mt-4 pt-4 border-t space-y-2">
+                        <p className="text-sm font-medium">Shipping Details</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {order.carrier && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground">Carrier</p>
+                              <p className="text-sm">{order.carrier}</p>
+                            </div>
+                          )}
+                          {order.shipStartDate && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground">Ship Start Date</p>
+                              <p className="text-sm">{new Date(order.shipStartDate).toLocaleDateString()}</p>
+                            </div>
+                          )}
+                          {order.shipArrivalDate && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground">Ship Arrival Date</p>
+                              <p className="text-sm">{new Date(order.shipArrivalDate).toLocaleDateString()}</p>
+                            </div>
+                          )}
+                        </div>
+                        {order.trackingLinks && order.trackingLinks.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Tracking Links</p>
+                            <div className="space-y-2">
+                              {order.trackingLinks.map((link, idx) => (
+                                <div key={idx} className="text-sm">
+                                  <a
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    {link.url}
+                                  </a>
+                                  {link.notes && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{link.notes}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Order</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete Order #{orderToDelete?.orderNumber ?? orderToDelete?.id.slice(-6)}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false)
+                  setOrderToDelete(null)
+                }}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

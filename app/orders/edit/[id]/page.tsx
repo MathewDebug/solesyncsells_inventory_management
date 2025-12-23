@@ -1,12 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -16,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Search, X, ChevronDownIcon, ChevronDown, ChevronUp, Plus } from "lucide-react"
+import { Search, X, ChevronDownIcon, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Product {
@@ -35,11 +43,41 @@ interface SelectedProduct {
   status: "SHIPPING" | "PARTIALLY ARRIVED" | "COMPLETED"
 }
 
+const ORDER_STATUSES = ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"] as const
+type OrderStatus = typeof ORDER_STATUSES[number]
+
+interface OrderProduct {
+  productId: string
+  productName: string
+  size: string
+  quantity: number
+  price?: number
+  arrivedQuantity?: number
+  status?: OrderStatus
+}
+
+interface Order {
+  id: string
+  orderNumber: number | null
+  products: OrderProduct[]
+  date: string
+  paymentMethod: string
+  totalItemCount: number
+  supplier?: string | null
+  notes?: string | null
+  totalOrderAmount?: number | null
+  feesAndShipping?: number | null
+  productCost?: number | null
+  carrier?: string | null
+  shipStartDate?: string | null
+  trackingLinks?: TrackingLink[]
+  status?: OrderStatus
+  createdAt: string
+}
+
 const AVAILABLE_SIZES = ["XXS", "XS", "S", "M", "L", "XL", "XXL"]
 const PAYMENT_METHODS = ["PayPal", "Zelle", "Wire Transfer", "Cashapp", "Venmo", "Cash"]
 const CARRIERS = ["UPS", "USPS", "FedEx", "DHL"]
-const ORDER_STATUSES = ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"] as const
-type OrderStatus = typeof ORDER_STATUSES[number]
 
 interface TrackingLink {
   url: string
@@ -47,8 +85,11 @@ interface TrackingLink {
   arrivalDate: Date | null
 }
 
-export default function CreateOrderPage() {
+export default function EditOrderPage() {
   const router = useRouter()
+  const params = useParams()
+  const orderId = params.id as string
+
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -61,24 +102,21 @@ export default function CreateOrderPage() {
   const [feesAndShipping, setFeesAndShipping] = useState<number | null>(0)
   const [productCost, setProductCost] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(true)
   const [isShippingDetailsOpen, setIsShippingDetailsOpen] = useState(true)
-  const [orderStatus, setOrderStatus] = useState<OrderStatus>("SHIPPING")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [carrier, setCarrier] = useState<string>("")
   const [shipStartDate, setShipStartDate] = useState<Date | null>(null)
   const [trackingLinks, setTrackingLinks] = useState<TrackingLink[]>([{ url: "", notes: "", arrivalDate: null }])
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>("SHIPPING")
 
   useEffect(() => {
     fetchProducts()
-    // Initialize ship start date to order date
-    setShipStartDate(new Date())
-  }, [])
-
-  // Update ship start date when order date changes
-  useEffect(() => {
-    setShipStartDate(date)
-  }, [date])
+    fetchOrder()
+  }, [orderId])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -101,6 +139,93 @@ export default function CreateOrderPage() {
       }
     } catch (error) {
       console.error("Error fetching products:", error)
+    }
+  }
+
+  const fetchOrder = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/orders/${orderId}`)
+      if (response.ok) {
+        const order: Order = await response.json()
+        
+        // Set basic order info
+        setDate(new Date(order.date))
+        setPaymentMethod(order.paymentMethod)
+        setSupplier(order.supplier || "")
+        setNotes(order.notes || "")
+        setTotalOrderAmount(order.totalOrderAmount || null)
+        setFeesAndShipping(order.feesAndShipping ?? 0)
+        // Shipping info
+        setCarrier(order.carrier || "")
+        setShipStartDate(order.shipStartDate ? new Date(order.shipStartDate) : new Date(order.date))
+        // Convert tracking links, ensuring arrivalDate is a Date object
+        const processedTrackingLinks = order.trackingLinks && order.trackingLinks.length > 0 
+          ? order.trackingLinks.map((link: any) => ({
+              url: link.url || "",
+              notes: link.notes || "",
+              arrivalDate: link.arrivalDate ? new Date(link.arrivalDate) : null,
+            }))
+          : [{ url: "", notes: "", arrivalDate: null }]
+        setTrackingLinks(processedTrackingLinks)
+        setOrderStatus(order.status || "SHIPPING")
+        
+        // Product cost will be calculated from products, but use stored value if available as initial value
+        // It will be recalculated in the useEffect anyway
+
+        // Convert order products to SelectedProduct format
+        const productMap = new Map<string, SelectedProduct>()
+
+        order.products.forEach((orderProduct) => {
+          const { productId, productName, size, quantity, price, arrivedQuantity, status } = orderProduct
+          // Convert -1 (unknown) to undefined, keep other values as is
+          const normalizedPrice = price === -1 ? undefined : (price ?? undefined)
+          // Convert ARRIVED status to COMPLETED for backward compatibility
+          const rawStatus = status as string | undefined
+          const normalizedStatus: OrderStatus = rawStatus === "ARRIVED" ? "COMPLETED" : (rawStatus && ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"].includes(rawStatus) ? rawStatus as OrderStatus : "SHIPPING")
+
+          if (!productMap.has(productId)) {
+            // Initialize with empty size quantities and arrived quantities - we'll populate from order data
+            const initialSizeQuantities: Record<string, number> = {}
+            const initialArrivedQuantities: Record<string, number> = {}
+
+            productMap.set(productId, {
+              productId,
+              productName,
+              price: normalizedPrice,
+              sizeQuantities: initialSizeQuantities,
+              arrivedQuantities: initialArrivedQuantities,
+              status: normalizedStatus,
+            })
+          }
+
+          const selectedProduct = productMap.get(productId)!
+          selectedProduct.sizeQuantities[size] = quantity
+          selectedProduct.arrivedQuantities[size] = arrivedQuantity || 0
+          // Use the price from the first product entry if available (and not undefined)
+          if (normalizedPrice !== undefined && selectedProduct.price === undefined) {
+            selectedProduct.price = normalizedPrice
+          }
+          // Use the status from the first product entry if available
+          if (normalizedStatus && !selectedProduct.status) {
+            selectedProduct.status = normalizedStatus
+          }
+        })
+
+        // Calculate product statuses based on arrived quantities
+        productMap.forEach((product) => {
+          product.status = calculateProductStatus(product)
+        })
+
+        setSelectedProducts(Array.from(productMap.values()))
+      } else {
+        setError("Failed to load order")
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error)
+      setError("An error occurred while loading the order")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -351,8 +476,8 @@ export default function CreateOrderPage() {
         })
       })
 
-      const response = await fetch("/api/orders", {
-        method: "POST",
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -364,8 +489,8 @@ export default function CreateOrderPage() {
           supplier: supplier || undefined,
           notes: notes || undefined,
           totalOrderAmount: totalOrderAmount || undefined,
-          feesAndShipping: feesAndShipping !== null && feesAndShipping > 0 ? feesAndShipping : undefined,
-          productCost: productCost || undefined,
+          feesAndShipping: feesAndShipping !== null && feesAndShipping !== undefined ? feesAndShipping : undefined,
+          productCost: productCost !== null ? productCost : undefined,
           carrier: carrier || undefined,
           shipStartDate: shipStartDate ? shipStartDate.toISOString() : undefined,
           trackingLinks: trackingLinks.filter(link => link.url.trim() !== "").map(link => ({
@@ -382,24 +507,70 @@ export default function CreateOrderPage() {
       if (response.ok) {
         router.push("/orders")
       } else {
-        setError(data.error || "Failed to create order")
+        setError(data.error || "Failed to update order")
       }
     } catch (error) {
-      console.error("Error creating order:", error)
-      setError("An error occurred while creating the order")
+      console.error("Error updating order:", error)
+      setError("An error occurred while updating the order")
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true)
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        router.push("/orders")
+      } else {
+        const data = await response.json()
+        setError(data.error || "Failed to delete order")
+        setDeleteDialogOpen(false)
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error)
+      setError("An error occurred while deleting the order")
+      setDeleteDialogOpen(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-muted-foreground">Loading order...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
     <DashboardLayout>
       <div className="space-y-6 h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between flex-shrink-0">
-          <h1 className="text-3xl font-bold">Create New Order</h1>
-          <Button variant="outline" onClick={() => router.push("/orders")}>
-            Cancel
-          </Button>
+          <h1 className="text-3xl font-bold">Edit Order</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/orders")}>
+              Cancel
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
@@ -450,10 +621,10 @@ export default function CreateOrderPage() {
             </div>
           </Card>
 
-          {/* Right Column - Order Information */}
+          {/* Right Column - Order Details */}
           <Card className="flex flex-col h-full overflow-hidden">
             <CardHeader className="flex-shrink-0">
-              <CardTitle>Order Information</CardTitle>
+              <CardTitle>Order Details</CardTitle>
             </CardHeader>
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden px-6 pb-6">
               {/* Scrollable Content Area */}
@@ -875,13 +1046,42 @@ export default function CreateOrderPage() {
                   disabled={selectedProducts.length === 0 || !paymentMethod || submitting}
                   className="w-full"
                 >
-                  {submitting ? "Creating Order..." : "Create Order"}
+                  {submitting ? "Updating Order..." : "Update Order"}
                 </Button>
               </div>
             </div>
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this order? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }
+
