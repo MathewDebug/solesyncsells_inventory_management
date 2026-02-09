@@ -7,10 +7,10 @@ export const runtime = "nodejs"
 // GET - Fetch a single order by ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const client = await clientPromise
     if (!client) {
@@ -66,12 +66,12 @@ export async function GET(
 // PUT - Update an order
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
     const { products, date, paymentMethod, totalItemCount, supplier, notes, totalOrderAmount, feesAndShipping, productCost, carrier, shipStartDate, trackingLinks, shipArrivalDate, status } = body
-    const { id } = params
+    const { id } = await params
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -167,10 +167,10 @@ export async function PUT(
 // DELETE - Delete an order
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const client = await clientPromise
     if (!client) {

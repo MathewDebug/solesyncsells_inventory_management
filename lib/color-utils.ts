@@ -1,8 +1,8 @@
 /**
  * Color Utility Functions
- * 
+ *
  * Helper functions to get the appropriate color level based on component nesting.
- * 
+ *
  * Usage in components:
  * - Page background: bg-background (color1)
  * - First level (navbar, main cards): bg-card (color2)
@@ -10,21 +10,8 @@
  * - Nested level 2: bg-muted (color4)
  * - Nested level 3: bg-color5 (color5)
  * - Nested level 4: bg-color6 (color6)
- * 
- * Example:
- * ```tsx
- * // Page background
- * <div className="bg-background"> // color1
- *   {/* Navbar - first level component */}
- *   <nav className="bg-card"> // color2
- *     {/* Nested menu item */}
- *     <div className="bg-secondary"> // color3
- *       {/* Further nested */}
- *       <span className="bg-muted"> // color4
- *     </div>
- *   </nav>
- * </div>
- * ```
+ *
+ * Example: Page uses bg-background, then nav bg-card, then nested div bg-secondary, then span bg-muted.
  */
 
 export const colorLevels = {

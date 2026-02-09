@@ -43,8 +43,7 @@ interface SelectedProduct {
   status: "SHIPPING" | "PARTIALLY ARRIVED" | "COMPLETED"
 }
 
-const ORDER_STATUSES = ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"] as const
-type OrderStatus = typeof ORDER_STATUSES[number]
+type OrderStatus = "SHIPPING" | "PARTIALLY ARRIVED" | "COMPLETED"
 
 interface OrderProduct {
   productId: string
@@ -116,6 +115,7 @@ export default function EditOrderPage() {
   useEffect(() => {
     fetchProducts()
     fetchOrder()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchOrder depends on orderId only
   }, [orderId])
 
   useEffect(() => {
@@ -160,8 +160,13 @@ export default function EditOrderPage() {
         setCarrier(order.carrier || "")
         setShipStartDate(order.shipStartDate ? new Date(order.shipStartDate) : new Date(order.date))
         // Convert tracking links, ensuring arrivalDate is a Date object
+        interface TrackingLinkInput {
+          url?: string
+          notes?: string
+          arrivalDate?: string | Date | null
+        }
         const processedTrackingLinks = order.trackingLinks && order.trackingLinks.length > 0 
-          ? order.trackingLinks.map((link: any) => ({
+          ? order.trackingLinks.map((link: TrackingLinkInput) => ({
               url: link.url || "",
               notes: link.notes || "",
               arrivalDate: link.arrivalDate ? new Date(link.arrivalDate) : null,
@@ -369,7 +374,7 @@ export default function EditOrderPage() {
     selectedProducts.forEach((product) => {
       // Only calculate if price is defined (not blank/unknown)
       if (product.price !== undefined && product.price !== null && !isNaN(product.price) && product.price >= 0) {
-        Object.entries(product.sizeQuantities).forEach(([size, quantity]) => {
+        Object.entries(product.sizeQuantities).forEach(([, quantity]) => {
           if (quantity > 0) {
             totalProductCost += product.price! * quantity
           }
@@ -919,7 +924,7 @@ export default function EditOrderPage() {
                     <p className="text-sm text-muted-foreground">No products selected</p>
                   ) : (
                     <div className="space-y-3">
-                    {[...selectedProducts].sort((a, b) => a.productName.localeCompare(b.productName)).map((product, sortedIndex) => {
+                    {[...selectedProducts].sort((a, b) => a.productName.localeCompare(b.productName)).map((product) => {
                       // Find original index for updates
                       const originalIndex = selectedProducts.findIndex(p => p.productId === product.productId && p.productName === product.productName)
                       return (

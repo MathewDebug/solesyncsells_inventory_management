@@ -491,7 +491,7 @@ export default function ProductsPage() {
                     ))}
                     {customSizes.length === 0 && (
                       <p className="text-xs text-muted-foreground italic">
-                        No custom sizes added. Click "Add Custom Size" to add one.
+                        No custom sizes added. Click &quot;Add Custom Size&quot; to add one.
                       </p>
                     )}
                   </div>

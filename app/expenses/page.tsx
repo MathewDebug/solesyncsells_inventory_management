@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Plus, Edit, Trash2, CalendarIcon, ChevronDown, ChevronRight } from "lucide-react"
+import { Plus, Edit, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Expense {
@@ -207,7 +207,7 @@ export default function ExpensesPage() {
 
     try {
       setSubmitting(true)
-      const updateData: any = {
+      const updateData: Record<string, string | number | boolean | null | undefined> = {
         date: date ? date.toISOString() : null,
         item: item.trim(),
         cost: parseFloat(cost),

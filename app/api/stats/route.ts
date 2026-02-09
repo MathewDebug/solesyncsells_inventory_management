@@ -27,10 +27,18 @@ export async function GET() {
     let totalSpent = 0
     const supplierCounts: Record<string, number> = {}
     
-    orders.forEach((order: any) => {
+    interface OrderProduct {
+      quantity?: number
+    }
+    interface StatsOrder {
+      products?: OrderProduct[]
+      totalOrderAmount?: number
+      supplier?: string
+    }
+    ;(orders as StatsOrder[]).forEach((order) => {
       // Calculate products bought
       if (order.products && Array.isArray(order.products)) {
-        order.products.forEach((product: any) => {
+        order.products.forEach((product: OrderProduct) => {
           if (product.quantity && typeof product.quantity === 'number') {
             productsBought += product.quantity
           }

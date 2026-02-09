@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
 
 export const runtime = "nodejs"
 
@@ -76,7 +75,18 @@ export async function POST(request: Request) {
     }
     const db = client.db()
 
-    const expenseData: any = {
+    const expenseData: {
+      date: Date | null
+      item: string
+      cost: number
+      quantity: number | null
+      isRecurring: boolean
+      createdAt: Date
+      recurringInterval?: string
+      recurringEvery?: number
+      startDate?: Date
+      endDate?: Date | null
+    } = {
       date: date ? new Date(date) : null,
       item,
       cost: parseFloat(cost),

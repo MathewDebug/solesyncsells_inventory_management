@@ -9,9 +9,10 @@ export interface User {
   createdAt?: Date
 }
 
-export async function createUser(email: string, password: string, name?: string): Promise<User | null> {
+export async function createUser(email: string, password: string, name?: string): Promise<Pick<User, "_id" | "email" | "name"> | null> {
   try {
     const client = await clientPromise
+    if (!client) return null
     const db = client.db()
 
     // Check if user already exists

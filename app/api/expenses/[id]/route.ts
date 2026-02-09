@@ -90,7 +90,18 @@ export async function PUT(
     }
     const db = client.db()
 
-    const updateData: any = {
+    const updateData: {
+      date: Date | null
+      item: string
+      cost: number
+      quantity: number | null
+      isRecurring: boolean
+      updatedAt: Date
+      recurringInterval?: string | null
+      recurringEvery?: number | null
+      startDate?: Date | null
+      endDate?: Date | null
+    } = {
       date: date ? new Date(date) : null,
       item,
       cost: parseFloat(cost),

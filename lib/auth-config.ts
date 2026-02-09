@@ -1,4 +1,5 @@
-import NextAuth from "next-auth"
+import type { Session } from "next-auth"
+import type { JWT } from "next-auth/jwt"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import clientPromise from "./mongodb"
@@ -19,6 +20,7 @@ export const authConfig = {
 
         try {
           const client = await clientPromise
+          if (!client) return null
           const db = client.db()
           const user = await db.collection("users").findOne({ 
             email: credentials.email as string
@@ -56,14 +58,14 @@ export const authConfig = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: { id?: string; email?: string | null; name?: string | null } }) {
       if (user) {
-        token.id = user.id
-        token.email = user.email
+        if (user.id) token.id = user.id
+        if (user.email != null) token.email = user.email
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.email = token.email as string

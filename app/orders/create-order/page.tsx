@@ -38,8 +38,7 @@ interface SelectedProduct {
 const AVAILABLE_SIZES = ["XXS", "XS", "S", "M", "L", "XL", "XXL"]
 const PAYMENT_METHODS = ["PayPal", "Zelle", "Wire Transfer", "Cashapp", "Venmo", "Cash"]
 const CARRIERS = ["UPS", "USPS", "FedEx", "DHL"]
-const ORDER_STATUSES = ["SHIPPING", "PARTIALLY ARRIVED", "COMPLETED"] as const
-type OrderStatus = typeof ORDER_STATUSES[number]
+type OrderStatus = "SHIPPING" | "PARTIALLY ARRIVED" | "COMPLETED"
 
 interface TrackingLink {
   url: string
@@ -244,7 +243,7 @@ export default function CreateOrderPage() {
     selectedProducts.forEach((product) => {
       // Only calculate if price is defined (not blank/unknown)
       if (product.price !== undefined && product.price !== null && !isNaN(product.price) && product.price >= 0) {
-        Object.entries(product.sizeQuantities).forEach(([size, quantity]) => {
+        Object.entries(product.sizeQuantities).forEach(([, quantity]) => {
           if (quantity > 0) {
             totalProductCost += product.price! * quantity
           }
@@ -748,7 +747,7 @@ export default function CreateOrderPage() {
                     <p className="text-sm text-muted-foreground">No products selected</p>
                   ) : (
                     <div className="space-y-3">
-                    {[...selectedProducts].sort((a, b) => a.productName.localeCompare(b.productName)).map((product, sortedIndex) => {
+                    {[...selectedProducts].sort((a, b) => a.productName.localeCompare(b.productName)).map((product) => {
                       // Find original index for updates
                       const originalIndex = selectedProducts.findIndex(p => p.productId === product.productId && p.productName === product.productName)
                       return (
