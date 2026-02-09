@@ -11,7 +11,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { name, image, sizes } = body
+    const { name, image, imageBack, category, type, colorway, productCode, sizes, sizeQuantities } = body
     const { id } = await params
 
     if (!name || !image) {
@@ -43,16 +43,34 @@ export async function PUT(
       )
     }
 
+    const updatePayload: {
+      name: string
+      image: string
+      sizes: string[]
+      updatedAt: Date
+      imageBack?: string | null
+      category?: string
+      type?: string
+      colorway?: string
+      productCode?: string
+      sizeQuantities?: Record<string, number>
+    } = {
+      name,
+      image,
+      sizes: sizes || [],
+      updatedAt: new Date(),
+    }
+    if (imageBack !== undefined) updatePayload.imageBack = imageBack || null
+    if (category !== undefined) updatePayload.category = category || ""
+    if (type !== undefined) updatePayload.type = type || name
+    if (colorway !== undefined) updatePayload.colorway = colorway || ""
+    if (productCode !== undefined) updatePayload.productCode = productCode || ""
+    if (sizeQuantities != null && typeof sizeQuantities === "object") {
+      updatePayload.sizeQuantities = sizeQuantities
+    }
     const result = await db.collection("products").updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          name,
-          image,
-          sizes: sizes || [],
-          updatedAt: new Date(),
-        },
-      }
+      { $set: updatePayload }
     )
 
     if (result.matchedCount === 0) {
@@ -67,7 +85,13 @@ export async function PUT(
         id,
         name,
         image,
+        imageBack: updatePayload.imageBack ?? null,
+        category: updatePayload.category ?? "",
+        type: updatePayload.type ?? name,
+        colorway: updatePayload.colorway ?? "",
+        productCode: updatePayload.productCode ?? "",
         sizes: sizes || [],
+        sizeQuantities: updatePayload.sizeQuantities ?? {},
       },
       { status: 200 }
     )
@@ -75,6 +99,57 @@ export async function PUT(
     console.error("Error updating product:", error)
     return NextResponse.json(
       { error: "Failed to update product" },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH - Update only inventory (sizeQuantities)
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const body = await request.json()
+    const { sizeQuantities } = body
+    const { id } = await params
+
+    if (sizeQuantities == null || typeof sizeQuantities !== "object") {
+      return NextResponse.json(
+        { error: "sizeQuantities object is required" },
+        { status: 400 }
+      )
+    }
+
+    const client = await clientPromise
+    if (!client) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      )
+    }
+    const db = client.db()
+
+    const result = await db.collection("products").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { sizeQuantities, updatedAt: new Date() } }
+    )
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(
+      { id, sizeQuantities },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error updating inventory:", error)
+    return NextResponse.json(
+      { error: "Failed to update inventory" },
       { status: 500 }
     )
   }

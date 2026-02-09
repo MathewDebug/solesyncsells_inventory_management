@@ -26,7 +26,13 @@ export async function GET() {
         id: product._id.toString(),
         name: product.name,
         image: product.image,
+        imageBack: product.imageBack ?? null,
+        category: product.category ?? "",
+        type: product.type ?? product.name,
+        colorway: product.colorway ?? "",
+        productCode: product.productCode ?? "",
         sizes: product.sizes || [],
+        sizeQuantities: product.sizeQuantities || {},
         createdAt: product.createdAt,
       })),
       { status: 200 }
@@ -44,7 +50,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, image, sizes } = body
+    const { name, image, imageBack, category, type, colorway, productCode, sizes, sizeQuantities } = body
 
     if (!name || !image) {
       return NextResponse.json(
@@ -74,7 +80,13 @@ export async function POST(request: Request) {
     const result = await db.collection("products").insertOne({
       name,
       image,
+      imageBack: imageBack || null,
+      category: category || "",
+      type: type || name,
+      colorway: colorway || "",
+      productCode: productCode || "",
       sizes: sizes || [],
+      sizeQuantities: sizeQuantities && typeof sizeQuantities === "object" ? sizeQuantities : {},
       createdAt: new Date(),
     })
 
@@ -83,7 +95,13 @@ export async function POST(request: Request) {
         id: result.insertedId.toString(),
         name,
         image,
+        imageBack: imageBack || null,
+        category: category || "",
+        type: type || name,
+        colorway: colorway || "",
+        productCode: productCode || "",
         sizes: sizes || [],
+        sizeQuantities: sizeQuantities && typeof sizeQuantities === "object" ? sizeQuantities : {},
         createdAt: new Date(),
       },
       { status: 201 }
