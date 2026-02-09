@@ -7,10 +7,10 @@ export const runtime = "nodejs"
 // GET - Fetch a single expense by ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const client = await clientPromise
     if (!client) {
@@ -60,10 +60,10 @@ export async function GET(
 // PUT - Update an expense
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { date, item, cost, quantity, isRecurring, recurringInterval, recurringEvery, startDate, endDate } = body
 
@@ -161,10 +161,10 @@ export async function PUT(
 // DELETE - Delete an expense
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const client = await clientPromise
     if (!client) {
