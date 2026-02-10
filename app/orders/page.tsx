@@ -15,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 
 interface TrackingLink {
@@ -57,6 +64,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL")
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
@@ -67,17 +75,26 @@ export default function OrdersPage() {
   }, [])
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredOrders(orders)
-    } else {
-      const filtered = orders.filter((order) =>
-        order.products.some((p) =>
-          p.productName.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      )
-      setFilteredOrders(filtered)
+    const q = searchQuery.toLowerCase().trim()
+
+    let base = orders
+
+    if (statusFilter !== "ALL") {
+      base = base.filter((order) => order.status === statusFilter)
     }
-  }, [searchQuery, orders])
+
+    if (!q) {
+      setFilteredOrders(base)
+      return
+    }
+
+    const filtered = base.filter((order) =>
+      order.products.some((p) =>
+        p.productName.toLowerCase().includes(q)
+      )
+    )
+    setFilteredOrders(filtered)
+  }, [searchQuery, orders, statusFilter])
 
   const fetchOrders = async () => {
     try {
@@ -138,15 +155,45 @@ export default function OrdersPage() {
           </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search orders..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search + Status Filter */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {filteredOrders.length} of {orders.length} orders
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Status:</span>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(
+                    value === "ALL" ? "ALL" : (value as OrderStatus)
+                  )
+                }
+              >
+                <SelectTrigger className="w-44 h-8 text-xs">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All statuses</SelectItem>
+                  <SelectItem value="SHIPPING">Shipping</SelectItem>
+                  <SelectItem value="PARTIALLY ARRIVED">
+                    Partially Arrived
+                  </SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         {loading ? (

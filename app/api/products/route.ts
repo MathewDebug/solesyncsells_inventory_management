@@ -30,6 +30,7 @@ export async function GET(request: Request) {
         name: product.name,
         image: product.image,
         imageBack: product.imageBack ?? null,
+        brand: product.brand ?? "",
         category: product.category ?? "",
         type: product.type ?? product.name,
         colorway: product.colorway ?? "",
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, image, imageBack, category, type, colorway, productCode, sizes, sizeQuantities } = body
+    const { name, image, imageBack, brand, category, type, colorway, productCode, sizes, sizeQuantities } = body
 
     if (!name || !image) {
       return NextResponse.json(
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
       name,
       image,
       imageBack: imageBack || null,
+      brand: brand ?? "",
       category: category || "",
       type: type || name,
       colorway: colorway || "",
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
         name,
         image,
         imageBack: imageBack || null,
+        brand: brand ?? "",
         category: category || "",
         type: type || name,
         colorway: colorway || "",

@@ -11,7 +11,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { name, image, imageBack, category, type, colorway, productCode, sizes, sizeQuantities } = body
+    const { name, image, imageBack, brand, category, type, colorway, productCode, sizes, sizeQuantities } = body
     const { id } = await params
 
     if (!name || !image) {
@@ -49,6 +49,7 @@ export async function PUT(
       sizes: string[]
       updatedAt: Date
       imageBack?: string | null
+      brand?: string
       category?: string
       type?: string
       colorway?: string
@@ -61,6 +62,7 @@ export async function PUT(
       updatedAt: new Date(),
     }
     if (imageBack !== undefined) updatePayload.imageBack = imageBack || null
+    if (brand !== undefined) updatePayload.brand = brand ?? ""
     if (category !== undefined) updatePayload.category = category || ""
     if (type !== undefined) updatePayload.type = type || name
     if (colorway !== undefined) updatePayload.colorway = colorway || ""
@@ -86,6 +88,7 @@ export async function PUT(
         name,
         image,
         imageBack: updatePayload.imageBack ?? null,
+        brand: updatePayload.brand ?? "",
         category: updatePayload.category ?? "",
         type: updatePayload.type ?? name,
         colorway: updatePayload.colorway ?? "",

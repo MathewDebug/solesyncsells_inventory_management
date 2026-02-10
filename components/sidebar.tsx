@@ -11,14 +11,15 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   Package, 
-  CheckCircle, 
   Store,
   Box,
   LogOut,
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  ScrollText
+  ScrollText,
+  ListChecks,
+  BarChart3,
 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -26,9 +27,10 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Tasks", href: "/tasks", icon: ListChecks },
+  { name: "Sales", href: "/sales", icon: BarChart3 },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Sold", href: "/sold", icon: CheckCircle },
   { name: "Stores", href: "/stores", icon: Store },
   { name: "Products", href: "/products", icon: Box },
   { name: "Expenses", href: "/expenses", icon: DollarSign },

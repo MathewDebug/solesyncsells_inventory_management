@@ -30,6 +30,8 @@ interface LogEntry {
     productName?: string
     changes?: string
     action?: string
+    products?: { productName: string; changes: string }[]
+    sizesAndQuantitiesSummary?: string
   } | null
 }
 
@@ -39,27 +41,27 @@ export default function LogsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
 
   useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        setLoading(true)
+        const url =
+          categoryFilter === "all"
+            ? "/api/logs"
+            : `/api/logs?category=${encodeURIComponent(categoryFilter)}`
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setLogs(data)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchLogs()
   }, [categoryFilter])
-
-  const fetchLogs = async () => {
-    try {
-      setLoading(true)
-      const url =
-        categoryFilter === "all"
-          ? "/api/logs"
-          : `/api/logs?category=${encodeURIComponent(categoryFilter)}`
-      const res = await fetch(url)
-      if (res.ok) {
-        const data = await res.json()
-        setLogs(data)
-      }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
@@ -126,11 +128,24 @@ export default function LogsPage() {
                       </TableCell>
                       <TableCell>
                         <p className="font-medium text-sm">{log.message}</p>
-                        {log.details?.changes && (
+                        {log.details?.products && log.details.products.length > 0 ? (
+                          <ul className="text-muted-foreground text-xs mt-1 space-y-0.5 list-none">
+                            {log.details.products.map((p, i) => (
+                              <li key={i}>
+                                <span className="font-medium text-foreground">{p.productName}:</span>{" "}
+                                {p.changes}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : log.details?.changes ? (
                           <p className="text-muted-foreground text-xs mt-0.5">
                             {log.details.changes}
                           </p>
-                        )}
+                        ) : log.details?.action === "removed" && log.details?.sizesAndQuantitiesSummary ? (
+                          <p className="text-muted-foreground text-xs mt-0.5">
+                            Sizes & quantities: {log.details.sizesAndQuantitiesSummary}
+                          </p>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}

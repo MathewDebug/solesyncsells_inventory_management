@@ -111,10 +111,30 @@ export async function DELETE(
     }
     const db = client.db()
 
+    const existing = await db.collection("inventory").findOne({
+      productId: new ObjectId(productId),
+    })
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Inventory item not found" },
+        { status: 404 }
+      )
+    }
+
     const product = await db.collection("products").findOne({
       _id: new ObjectId(productId),
     })
     const productName = product?.name ?? `Product ${productId}`
+
+    const sizeQuantities = (existing.sizeQuantities || {}) as Record<string, number>
+    const sizesAndQuantities = Object.entries(sizeQuantities)
+      .filter(([, qty]) => qty > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([size, qty]) => ({ size, quantity: qty }))
+    const summary =
+      sizesAndQuantities.length > 0
+        ? sizesAndQuantities.map(({ size, quantity }) => `${size}: ${quantity}`).join(", ")
+        : "No quantities"
 
     const result = await db.collection("inventory").deleteOne({
       productId: new ObjectId(productId),
@@ -135,6 +155,8 @@ export async function DELETE(
         productId,
         productName,
         action: "removed",
+        sizeQuantities: sizeQuantities,
+        sizesAndQuantitiesSummary: summary,
       },
     })
 

@@ -46,6 +46,7 @@ export async function GET() {
           name: product.name,
           image: product.image,
           imageBack: product.imageBack ?? null,
+          brand: product.brand ?? "",
           category: product.category ?? "",
           type: product.type ?? product.name,
           colorway: product.colorway ?? "",
@@ -60,6 +61,95 @@ export async function GET() {
     console.error("Error fetching inventory:", error)
     return NextResponse.json(
       { error: "Failed to fetch inventory" },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH - Batch update multiple inventory items (one log for the whole batch)
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json()
+    const { updates } = body
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return NextResponse.json(
+        { error: "updates array with at least one item is required" },
+        { status: 400 }
+      )
+    }
+
+    const client = await clientPromise
+    if (!client) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      )
+    }
+    const db = client.db()
+
+    const logEntries: { productName: string; changes: string }[] = []
+    const now = new Date()
+
+    for (const u of updates) {
+      const { productId, sizeQuantities } = u
+      if (!productId || sizeQuantities == null || typeof sizeQuantities !== "object") continue
+
+      const existing = await db.collection("inventory").findOne({
+        productId: new ObjectId(productId),
+      })
+      if (!existing) continue
+
+      const product = await db.collection("products").findOne({
+        _id: new ObjectId(productId),
+      })
+      const productName = product?.name ?? `Product ${productId}`
+
+      await db.collection("inventory").updateOne(
+        { productId: new ObjectId(productId) },
+        { $set: { sizeQuantities, updatedAt: now } }
+      )
+
+      const oldQty = (existing.sizeQuantities || {}) as Record<string, number>
+      const newQty = sizeQuantities as Record<string, number>
+      const allSizes = new Set([...Object.keys(oldQty), ...Object.keys(newQty)])
+      const changes: string[] = []
+      for (const size of Array.from(allSizes).sort()) {
+        const prev = oldQty[size] ?? 0
+        const next = newQty[size] ?? 0
+        if (prev !== next) {
+          changes.push(`${size}: ${prev}→${next}`)
+        }
+      }
+      const changeText = changes.length > 0 ? changes.join(", ") : "No quantity changes"
+      logEntries.push({ productName, changes: changeText })
+    }
+
+    if (logEntries.length > 0) {
+      const count = logEntries.length
+      const message =
+        count === 1
+          ? `Updated quantities for "${logEntries[0].productName}"`
+          : `Updated ${count} products`
+      await db.collection("logs").insertOne({
+        category: "inventory",
+        createdAt: now,
+        message,
+        details: {
+          productCount: count,
+          products: logEntries,
+        },
+      })
+    }
+
+    return NextResponse.json(
+      { updated: logEntries.length },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error batch updating inventory:", error)
+    return NextResponse.json(
+      { error: "Failed to update inventory" },
       { status: 500 }
     )
   }

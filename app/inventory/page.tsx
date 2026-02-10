@@ -27,6 +27,7 @@ interface ProductInfo {
   name: string
   image: string
   imageBack?: string | null
+  brand?: string
   category?: string
   type?: string
   colorway?: string
@@ -206,19 +207,25 @@ export default function InventoryPage() {
     const toUpdate = Object.entries(editQuantities).filter(([, qty]) =>
       Object.keys(qty).length > 0
     )
+    if (toUpdate.length === 0) {
+      setIsEditMode(false)
+      setEditQuantities({})
+      return
+    }
     try {
       setConfirming(true)
-      for (const [productId, editedQty] of toUpdate) {
+      const updates = toUpdate.map(([productId, editedQty]) => {
         const item = items.find((i) => i.productId === productId)
         const sizeQuantities = item
           ? { ...item.sizeQuantities, ...editedQty }
           : editedQty
-        await fetch(`/api/inventory/${productId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sizeQuantities }),
-        })
-      }
+        return { productId, sizeQuantities }
+      })
+      await fetch("/api/inventory", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates }),
+      })
       await fetchInventory()
       setIsEditMode(false)
       setEditQuantities({})
@@ -313,6 +320,11 @@ export default function InventoryPage() {
                             <p className="font-semibold text-xs leading-tight truncate">
                               {item.product.type || item.product.name}
                             </p>
+                            {item.product.brand && (
+                              <p className="text-[10px] text-muted-foreground truncate">
+                                {item.product.brand}
+                              </p>
+                            )}
                             <p className="text-[10px] text-muted-foreground truncate">
                               {[item.product.colorway, item.product.productCode]
                                 .filter(Boolean)
@@ -341,7 +353,7 @@ export default function InventoryPage() {
                                           <Input
                                             type="number"
                                             min={0}
-                                            className="h-6 w-9 text-right text-[10px]"
+                                            className="h-7 w-14 min-w-[3rem] text-right text-sm font-medium bg-background text-foreground border-input"
                                             value={getQuantity(item, size)}
                                             onChange={(e) => {
                                               const v = e.target.value

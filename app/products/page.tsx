@@ -20,6 +20,7 @@ interface Product {
   id: string
   name: string
   image: string
+  brand?: string
   sizes?: string[]
   createdAt: string
 }
@@ -32,6 +33,7 @@ export default function ProductsPage() {
   const [selectedProductForStats, setSelectedProductForStats] = useState<Product | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [itemName, setItemName] = useState("")
+  const [itemBrand, setItemBrand] = useState("")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
@@ -155,6 +157,7 @@ export default function ProductsPage() {
   const handleEdit = (product: Product) => {
     setEditingProduct(product)
     setItemName(product.name)
+    setItemBrand(product.brand ?? "")
     setImagePreview(product.image)
     setSelectedImage(null)
     const allSizes = product.sizes || []
@@ -170,6 +173,7 @@ export default function ProductsPage() {
     setIsOpen(false)
     setEditingProduct(null)
     setItemName("")
+    setItemBrand("")
     setSelectedImage(null)
     setImagePreview(null)
     setSelectedSizes([])
@@ -242,6 +246,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           name: itemName,
           image: base64Image,
+          brand: itemBrand.trim() || "",
           sizes: allSizes,
         }),
       })
@@ -302,6 +307,7 @@ export default function ProductsPage() {
           <Button onClick={() => {
             setEditingProduct(null)
             setItemName("")
+            setItemBrand("")
             setSelectedImage(null)
             setImagePreview(null)
             setSelectedSizes([])
@@ -369,7 +375,12 @@ export default function ProductsPage() {
                   </div>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <h3 className="font-semibold text-lg flex-1 break-words leading-tight" style={{ fontSize: 'clamp(0.75rem, 2vw, 1.125rem)' }}>{product.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg break-words leading-tight" style={{ fontSize: 'clamp(0.75rem, 2vw, 1.125rem)' }}>{product.name}</h3>
+                        {product.brand && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{product.brand}</p>
+                        )}
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -425,6 +436,15 @@ export default function ProductsPage() {
                 placeholder="Enter item name"
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand">Brand</Label>
+              <Input
+                id="brand"
+                placeholder="e.g. Essentials"
+                value={itemBrand}
+                onChange={(e) => setItemBrand(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -595,6 +615,12 @@ export default function ProductsPage() {
                 <Label>Product Name</Label>
                 <p className="text-sm font-medium">{selectedProductForStats.name}</p>
               </div>
+              {selectedProductForStats.brand && (
+                <div className="space-y-2">
+                  <Label>Brand</Label>
+                  <p className="text-sm text-muted-foreground">{selectedProductForStats.brand}</p>
+                </div>
+              )}
               {selectedProductForStats.sizes && selectedProductForStats.sizes.length > 0 && (
                 <div className="space-y-2">
                   <Label>Available Sizes</Label>
