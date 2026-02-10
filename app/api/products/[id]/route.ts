@@ -104,22 +104,15 @@ export async function PUT(
   }
 }
 
-// PATCH - Update only inventory (sizeQuantities)
+// PATCH - Update inventory (sizeQuantities and/or inInventory)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
-    const { sizeQuantities } = body
+    const { sizeQuantities, inInventory } = body
     const { id } = await params
-
-    if (sizeQuantities == null || typeof sizeQuantities !== "object") {
-      return NextResponse.json(
-        { error: "sizeQuantities object is required" },
-        { status: 400 }
-      )
-    }
 
     const client = await clientPromise
     if (!client) {
@@ -130,9 +123,23 @@ export async function PATCH(
     }
     const db = client.db()
 
+    const update: Record<string, unknown> = { updatedAt: new Date() }
+    if (sizeQuantities != null && typeof sizeQuantities === "object") {
+      update.sizeQuantities = sizeQuantities
+    }
+    if (inInventory !== undefined && typeof inInventory === "boolean") {
+      update.inInventory = inInventory
+    }
+    if (Object.keys(update).length <= 1) {
+      return NextResponse.json(
+        { error: "Provide sizeQuantities and/or inInventory" },
+        { status: 400 }
+      )
+    }
+
     const result = await db.collection("products").updateOne(
       { _id: new ObjectId(id) },
-      { $set: { sizeQuantities, updatedAt: new Date() } }
+      { $set: update }
     )
 
     if (result.matchedCount === 0) {
@@ -143,7 +150,7 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { id, sizeQuantities },
+      { id, sizeQuantities, inInventory },
       { status: 200 }
     )
   } catch (error) {

@@ -3,8 +3,8 @@ import clientPromise from "@/lib/mongodb"
 
 export const runtime = "nodejs"
 
-// GET - Fetch all products
-export async function GET() {
+// GET - Fetch all products (optional ?inventory=true for only inventory products)
+export async function GET(request: Request) {
   try {
     const client = await clientPromise
     if (!client) {
@@ -14,11 +14,14 @@ export async function GET() {
       )
     }
     const db = client.db()
-    
+    const { searchParams } = new URL(request.url)
+    const inventoryOnly = searchParams.get("inventory") === "true"
+
+    const filter = inventoryOnly ? { inInventory: true } : {}
     const products = await db.collection("products")
-      .find({})
+      .find(filter)
       .sort({ createdAt: -1 })
-      .limit(1000) // Limit to prevent memory issues
+      .limit(1000)
       .toArray()
 
     return NextResponse.json(
@@ -33,6 +36,7 @@ export async function GET() {
         productCode: product.productCode ?? "",
         sizes: product.sizes || [],
         sizeQuantities: product.sizeQuantities || {},
+        inInventory: product.inInventory ?? false,
         createdAt: product.createdAt,
       })),
       { status: 200 }
@@ -87,6 +91,7 @@ export async function POST(request: Request) {
       productCode: productCode || "",
       sizes: sizes || [],
       sizeQuantities: sizeQuantities && typeof sizeQuantities === "object" ? sizeQuantities : {},
+      inInventory: false,
       createdAt: new Date(),
     })
 
