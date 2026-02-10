@@ -1,0 +1,11 @@
+[
+  {
+    "_id": { "$oid": "694a305a45138b9c283fd87a" },
+    "date": null,
+    "item": "test",
+    "cost": 123,
+    "quantity": null,
+    "isRecurring": false,
+    "createdAt": { "$date": "2025-12-23T06:02:02.010Z" }
+  }
+]

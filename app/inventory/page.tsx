@@ -290,16 +290,18 @@ export default function InventoryPage() {
                           key={item.productId}
                           className="rounded-lg border bg-card overflow-hidden flex flex-row gap-2 p-2 relative"
                         >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive z-10"
-                            onClick={() => removeFromInventory(item.productId)}
-                            disabled={removingId === item.productId}
-                            title="Remove from inventory"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {isEditMode && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive z-10"
+                              onClick={() => removeFromInventory(item.productId)}
+                              disabled={removingId === item.productId}
+                              title="Remove from inventory"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <div className="flex-shrink-0 w-20 h-20 rounded border bg-muted/40 overflow-hidden">
                             <img
                               src={item.product.image}

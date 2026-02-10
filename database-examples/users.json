@@ -1,0 +1,9 @@
+[
+  {
+    "_id": { "$oid": "69182e10ce4adf751bbeaeef" },
+    "email": "solesyncsells@gmail.com",
+    "password": "$2b$10$/DCERupYTgHj/BkacpK3tuZOfUOAmACp9VLFzTjnGtf/QkHI2dTxa",
+    "name": "Mathew Yeung",
+    "createdAt": { "$date": "2025-11-15T07:38:56.860Z" }
+  }
+]

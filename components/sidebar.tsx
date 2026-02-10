@@ -17,7 +17,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
+  ScrollText
 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Stores", href: "/stores", icon: Store },
   { name: "Products", href: "/products", icon: Box },
   { name: "Expenses", href: "/expenses", icon: DollarSign },
+  { name: "Logs", href: "/logs", icon: ScrollText },
 ]
 
 export function Sidebar() {

@@ -1,0 +1,18 @@
+[
+  {
+    "_id": { "$oid": "69898ea6d841273d111c56de" },
+    "productId": { "$oid": "69183c6ace4adf751bbeaf08" },
+    "sizeQuantities": {
+      "XXS": 0,
+      "XS": 0,
+      "S": 0,
+      "M": 0,
+      "L": 0,
+      "XL": 0,
+      "XXL": 0,
+      "?": 0
+    },
+    "createdAt": { "$date": "2026-02-09T07:37:10.259Z" },
+    "updatedAt": { "$date": "2026-02-09T07:37:10.259Z" }
+  }
+]

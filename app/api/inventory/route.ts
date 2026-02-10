@@ -122,6 +122,17 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     })
 
+    await db.collection("logs").insertOne({
+      category: "inventory",
+      createdAt: new Date(),
+      message: `Added "${product.name}" to inventory`,
+      details: {
+        productId,
+        productName: product.name,
+        action: "added",
+      },
+    })
+
     return NextResponse.json(
       {
         productId,

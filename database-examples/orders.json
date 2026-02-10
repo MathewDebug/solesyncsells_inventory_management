@@ -1,0 +1,119 @@
+[
+  {
+    "_id": { "$oid": "694a30b045138b9c283fd87c" },
+    "orderNumber": 1,
+    "products": [
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "XXS",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 10,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "XS",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "S",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "M",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "L",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "XL",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c50ce4adf751bbeaf06",
+        "productName": "Essentials SS22 Sweatpants Cuffed Dark Oatmeal",
+        "size": "?",
+        "quantity": 10,
+        "price": 2.03,
+        "arrivedQuantity": 0,
+        "status": "PARTIALLY ARRIVED"
+      },
+      {
+        "productId": "69183c20ce4adf751bbeaf03",
+        "productName": "Essentials SS22 Shorts Light Oatmeal",
+        "size": "XS",
+        "quantity": 5,
+        "price": 2,
+        "arrivedQuantity": 0,
+        "status": "SHIPPING"
+      },
+      {
+        "productId": "69183c20ce4adf751bbeaf03",
+        "productName": "Essentials SS22 Shorts Light Oatmeal",
+        "size": "S",
+        "quantity": 5,
+        "price": 2,
+        "arrivedQuantity": 0,
+        "status": "SHIPPING"
+      },
+      {
+        "productId": "69183bbece4adf751bbeaefd",
+        "productName": "Essentials SS22 T-Shirt Stretch Limo",
+        "size": "XS",
+        "quantity": 1,
+        "price": -1,
+        "arrivedQuantity": 1,
+        "status": "COMPLETED"
+      }
+    ],
+    "date": { "$date": "2025-12-23T06:02:24.455Z" },
+    "paymentMethod": "Wire Transfer",
+    "totalItemCount": 81,
+    "supplier": "123",
+    "notes": null,
+    "totalOrderAmount": 123,
+    "feesAndShipping": null,
+    "productCost": null,
+    "carrier": "USPS",
+    "shipStartDate": { "$date": "2025-12-23T06:02:24.455Z" },
+    "trackingLinks": [
+      {
+        "url": "https://docs.google.com/spreadsheets/d/1bgObrJ5KxDJNDmTz40wshq7FAy51W3TgVIRamRjKeDo/edit?gid=711518582#gid=711518582",
+        "notes": "",
+        "arrivalDate": "2025-12-26T05:00:00.000Z"
+      }
+    ],
+    "shipArrivalDate": null,
+    "status": "PARTIALLY ARRIVED",
+    "createdAt": { "$date": "2025-12-23T06:03:28.578Z" },
+    "updatedAt": { "$date": "2025-12-23T06:03:54.632Z" }
+  }
+]

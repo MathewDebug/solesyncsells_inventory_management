@@ -30,6 +30,21 @@ export async function PATCH(
     }
     const db = client.db()
 
+    const existing = await db.collection("inventory").findOne({
+      productId: new ObjectId(productId),
+    })
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Inventory item not found" },
+        { status: 404 }
+      )
+    }
+
+    const product = await db.collection("products").findOne({
+      _id: new ObjectId(productId),
+    })
+    const productName = product?.name ?? `Product ${productId}`
+
     const result = await db.collection("inventory").updateOne(
       { productId: new ObjectId(productId) },
       { $set: { sizeQuantities, updatedAt: new Date() } }
@@ -41,6 +56,30 @@ export async function PATCH(
         { status: 404 }
       )
     }
+
+    const oldQty = (existing.sizeQuantities || {}) as Record<string, number>
+    const newQty = sizeQuantities as Record<string, number>
+    const allSizes = new Set([...Object.keys(oldQty), ...Object.keys(newQty)])
+    const changes: string[] = []
+    for (const size of Array.from(allSizes).sort()) {
+      const prev = oldQty[size] ?? 0
+      const next = newQty[size] ?? 0
+      if (prev !== next) {
+        changes.push(`${size}: ${prev}→${next}`)
+      }
+    }
+    const changeText = changes.length > 0 ? changes.join(", ") : "No quantity changes"
+
+    await db.collection("logs").insertOne({
+      category: "inventory",
+      createdAt: new Date(),
+      message: `Updated quantities for "${productName}"`,
+      details: {
+        productId,
+        productName,
+        changes: changeText,
+      },
+    })
 
     return NextResponse.json(
       { productId, sizeQuantities },
@@ -72,6 +111,11 @@ export async function DELETE(
     }
     const db = client.db()
 
+    const product = await db.collection("products").findOne({
+      _id: new ObjectId(productId),
+    })
+    const productName = product?.name ?? `Product ${productId}`
+
     const result = await db.collection("inventory").deleteOne({
       productId: new ObjectId(productId),
     })
@@ -82,6 +126,17 @@ export async function DELETE(
         { status: 404 }
       )
     }
+
+    await db.collection("logs").insertOne({
+      category: "inventory",
+      createdAt: new Date(),
+      message: `Removed "${productName}" from inventory`,
+      details: {
+        productId,
+        productName,
+        action: "removed",
+      },
+    })
 
     return NextResponse.json(
       { message: "Removed from inventory" },

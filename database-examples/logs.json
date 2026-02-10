@@ -1,0 +1,24 @@
+[
+  {
+    "_id": { "$oid": "000000000000000000000001" },
+    "category": "inventory",
+    "createdAt": { "$date": "2026-02-09T12:00:00.000Z" },
+    "message": "Updated quantities for \"Essentials SS22 Hoodie Light Oatmeal\"",
+    "details": {
+      "productId": "69183a3ece4adf751bbeaef5",
+      "productName": "Essentials SS22 Hoodie Light Oatmeal",
+      "changes": "M: 5→10, L: 3→7"
+    }
+  },
+  {
+    "_id": { "$oid": "000000000000000000000002" },
+    "category": "inventory",
+    "createdAt": { "$date": "2026-02-09T11:30:00.000Z" },
+    "message": "Removed \"Old Product Name\" from inventory",
+    "details": {
+      "productId": "69183c6ace4adf751bbeaf08",
+      "productName": "Old Product Name",
+      "action": "removed"
+    }
+  }
+]
