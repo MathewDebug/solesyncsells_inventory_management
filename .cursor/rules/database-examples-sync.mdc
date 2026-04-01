@@ -1,0 +1,14 @@
+---
+description: Keep database-examples JSON and README in sync when MongoDB document shape changes
+alwaysApply: true
+---
+
+# Database examples maintenance
+
+When a change affects **how data is stored or serialized** in MongoDB (new/removed/renamed fields, type changes, new collections, API response shapes that mirror stored documents, or migration of existing fields):
+
+1. **Update** the matching files under `database-examples/` (`*.json`) so example documents match the current schema. Use MongoDB extended JSON (`$oid`, `$date`) consistently with existing examples.
+2. **Update** `database-examples/README.md` if collections are added, removed, or meaningfully renamed; keep the table and descriptions accurate.
+3. If there is no example file yet for a collection the app uses, **add** one.
+
+Do this in the **same change** as the code/migration that alters the data shape—do not leave examples stale.

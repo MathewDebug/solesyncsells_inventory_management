@@ -1,0 +1,8 @@
+---
+description: Product domain — SoleSync Sells reselling inventory app
+alwaysApply: true
+---
+
+# SoleSync Sells (this repository)
+
+This app is **inventory and operations software for a reselling business**: buying stock, tracking **inventory by product and size**, **orders** from suppliers, **sales** on **online marketplaces** (e.g. eBay, Depop, Poshmark, Vinted, Mercari, etc.) and **wholesale** to stores/resellers. Prefer domain-appropriate naming and flows (orders → inventory → sales, expenses, tasks, activity logs).
